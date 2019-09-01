@@ -13,10 +13,12 @@ export default class App extends Component {
 
     state = {
         todoData: [
-            {id: 1, label: "Drink Coffe", important: false},
-            {id: 2, label: "Lern React", important: true},
-            {id: 3, label: "Build Awesome App", important: false},
-        ]
+            {id: 1, label: "Drink Coffe", important: false, done: false},
+            {id: 2, label: "Lern React", important: true, done: false},
+            {id: 3, label: "Build Awesome App", important: false, done: false},
+        ],
+        q: '',
+        filter: 'all' // active, all, done
     };
 
     deleteItem = (id) => {
@@ -39,10 +41,12 @@ export default class App extends Component {
 
     addItem = (text) => {
         console.log('Added ', text);
+        if (!text) return false;
         const newItem = {
             id: this.maxId++,
             label: text,
-            important: false
+            important: false,
+            done: false
         };
 
         this.setState(({todoData}) => {
@@ -58,27 +62,107 @@ export default class App extends Component {
     };
 
     onToggleImportant = (id) => {
-        console.log('Toggle' +
-            'Important ', id);
+        this.setState(({todoData}) => {
+            const idx = todoData.findIndex((el) => el.id === id);
+
+            const newArray = todoData.map((el, id) => {
+                if (id === idx) {
+                    el.important = !el.important;
+                }
+                return el;
+            });
+
+            return {
+                todoData: newArray,
+            }
+        });
     };
 
     onToggleDone = (id) => {
-        console.log('Toggle Done ', id);
+        this.setState(({todoData}) => {
+            const idx = todoData.findIndex((el) => el.id === id);
+
+            const newArray = todoData.map((el, id) => {
+                if (id === idx) {
+                    el.done = !el.done;
+                }
+                return el;
+            });
+
+            return {
+                todoData: newArray,
+            }
+        });
+    };
+
+    setStatistic = () => {
+        let done = this.state.todoData
+            .filter((el) => el.done);
+
+        let todo = this.state.todoData.length - done.length;
+
+        return {
+            needTodo: todo,
+            alreadyDone: done.length,
+        };
+    };
+
+    filterItems = (name) => {
+        this.setState({filter: name});
+    };
+
+    show = (todoData, filter) => {
+        let newArray;
+        switch (filter) {
+            case 'all':
+                newArray = todoData;
+                break;
+            case 'active':
+                newArray = todoData.filter(el => !el.done);
+                break;
+            case 'done':
+                newArray = todoData.filter(el => el.done);
+                break;
+            default:
+                newArray = todoData;
+        }
+
+        return newArray;
+    };
+
+    searchQuery = (q) => {
+        this.setState({q: q});
+    };
+
+    search = (todoData, q) => {
+        if (q === '') return todoData;
+
+        let label = '';
+        q = q.toLowerCase();
+        return todoData.filter((el) => {
+            label = el.label.toLowerCase();
+            return label.indexOf(q) > -1;
+        });
     };
 
     render() {
-        const {todoData} = this.state;
+        const {todoData, q, filter} = this.state;
+        const {needTodo, alreadyDone} = this.setStatistic();
+        const dataToShow = this.show(this.search(todoData, q), filter);
 
         return (
             <div className="todo-app">
-                <AppHeader toDo={1} done={3}/>
+                <AppHeader needTodo={needTodo} alreadyDone={alreadyDone}/>
                 <div className="top-panel d-flex">
-                    <SearchPanel/>
-                    <ItemStatusFilter/>
+                    <SearchPanel search={this.searchQuery}/>
+                    <ItemStatusFilter
+                        filter={filter}
+                        filterItems={this.filterItems}
+                    />
                 </div>
 
                 <TodoList
-                    todos={todoData}
+                    todos={dataToShow}
                     onDeleted={this.deleteItem}
                     onToggleImportant={this.onToggleImportant}
                     onToggleDone={this.onToggleDone}

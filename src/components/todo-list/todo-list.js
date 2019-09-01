@@ -18,11 +18,6 @@ const TodoList = ({todos, onDeleted, onToggleImportant, onToggleDone}) => {
                     onToggleDone={() => onToggleDone(id)}
                 />
             </li>
-            // <li>
-            //     <TodoListItem
-            //         label={item.label}
-            //         important={item.important}/>
-            // </li>
         )
     });
 
